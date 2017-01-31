@@ -1,0 +1,63 @@
+I want to pass a function:
+
+    f :: a -> CmdRequest -> (a, CmdResponse)
+
+from an application A to a library L.
+
+L
+ - defines CmdRequest and CmdResponse
+ - at initialization: given/stores `f`
+ - at initialization: stores an initial value of `a`
+  - as an opaque value
+  - L cannot see any `a` structure
+ - calls `f` (in response to some other L function being called)
+  - passing it `a` values it previously stored (from previous calls or system initialization)
+  - stores the resulting first `a` component of the return type
+
+A
+ - defines `f`
+ - at initialization: passes `f` to L
+ - at initialization: passes initial value of `a` to L
+ - can use specific types for `a` (e.g., Data.HashMap)
+ - calls another L function `g` that calls back to `f`
+ - when `f` is called it can see the internal structure (e.g., Data.HashMap) of `a`
+
+
+    A                              L                   L's State
+      initialization
+    .                              .                       .
+    .                              .                       .
+    .                              .                       .
+    |                              |                       |
+    x---------- pass f ----------->|                       |
+    |                              x----- store f -------->|
+    x--------------- a ----------->|                       |
+    |                              x----- store a -------->|
+    |                              |                       |
+    .                              .                       .
+    .                              .                       .
+    .                              .                       .
+      usage
+    x---------- call g ----------->|                       |
+    |                              |                       |
+    |                              x------- get f -------->|
+    |                              |                       |
+    |                              x------- get a -------->|
+    |                              |                       |
+    |<---- call f a CmdRequest ----|                       |
+    |                              |                       |
+    |-- return (a', CmdResponse) ->|                       |
+    |                              |                       |
+    |                              x----- store a' ------->|
+    |                              |                       |
+    |<- return CmdResponse from g -|                       |
+    .                              .                       .
+    .                              .                       .
+    .                              .                       .
+
+How can this be done in Haskell/GHC?
+
+I initially tried type-classes and existential types, but got stuck.
+
+http://stackoverflow.com/questions/41950524/functions-with-types-opaque-to-a-library-but-specific-to-an-application
+
