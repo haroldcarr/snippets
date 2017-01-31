@@ -1,6 +1,10 @@
-I want to pass a function:
+Initialize library with a function and intial value.
 
+Then the library calls that function with the given value in response to calls to other library functions.
+
+#+begin_example
     f :: a -> CmdRequest -> (a, CmdResponse)
+#+end_example
 
 from an application A to a library L.
 
@@ -22,7 +26,7 @@ A
  - calls another L function `g` that calls back to `f`
  - when `f` is called it can see the internal structure (e.g., Data.HashMap) of `a`
 
-
+#+begin_example
     A                              L                   L's State
       initialization
     .                              .                       .
@@ -54,10 +58,15 @@ A
     .                              .                       .
     .                              .                       .
     .                              .                       .
+#+end_example
 
-How can this be done in Haskell/GHC?
+Here is a solution with parameterized state.
 
-I initially tried type-classes and existential types, but got stuck.
+To build and test:
 
-http://stackoverflow.com/questions/41950524/functions-with-types-opaque-to-a-library-but-specific-to-an-application
-
+#+begin_example
+cd library
+stack build
+cd app
+statck test
+#+end_example
