@@ -23,7 +23,6 @@ A
  - at initialization: passes `f` to S
  - at initialization: passes initial value of `a` to S
  - can use specific types for `a` (e.g., Data.HashMap)
- - calls another S function `g` that calls back to `f`
  - when `f` is called it can see the internal structure (e.g., Data.HashMap) of `a`
 
 #+begin_example
@@ -37,24 +36,32 @@ A
     |                              x----- store f -------->|
     x--------------- a ----------->|                       |
     |                              x----- store a -------->|
-    |                              |                       |
-    .                              .                       .
-    .                              .                       .
-    .                              .                       .
+                                   |                       |
+                                   .                       .
+                                   .                       .
+                                   .                       .
       usage
-    x---------- call g ----------->|                       |
-    |                              |                       |
-    |                              x------- get f -------->|
-    |                              |                       |
-    |                              x------- get a -------->|
-    |                              |                       |
+                                   |                       |
+                                   |                       |
+                                   x------- get f -------->|
+                                   |                       |
+                                   x------- get a -------->|
+                                   |                       |
     |<---- call f a CmdRequest ----|                       |
     |                              |                       |
     |-- return (a', CmdResponse) ->|                       |
     |                              |                       |
     |                              x----- store a' ------->|
     |                              |                       |
-    |<- return CmdResponse from g -|                       |
+    .                              .                       .
+    .                              .                       .
+    .                              .                       .
+    |<--- call f a' CmdRequest ----|                       |
+    |                              |                       |
+    |- return (a'', CmdResponse) ->|                       |
+    |                              |                       |
+    |                              x----- store a'' ------>|
+    |                              |                       |
     .                              .                       .
     .                              .                       .
     .                              .                       .
