@@ -1,33 +1,33 @@
-Initialize library with a function and intial value.
+Initialize system with a function and intial value.
 
-Then the library calls that function with the given value in response to calls to other library functions.
+Then the system calls that function with the given value in response to calls to other system functions.
 
 #+begin_example
     f :: a -> CmdRequest -> (a, CmdResponse)
 #+end_example
 
-from an application A to a library L.
+from an application A to a system S.
 
-L
+S
  - defines CmdRequest and CmdResponse
  - at initialization: given/stores `f`
  - at initialization: stores an initial value of `a`
   - as an opaque value
-  - L cannot see any `a` structure
- - calls `f` (in response to some other L function being called)
+  - S cannot see any `a` structure
+ - calls `f` (as part of system operation)
   - passing it `a` values it previously stored (from previous calls or system initialization)
   - stores the resulting first `a` component of the return type
 
 A
  - defines `f`
- - at initialization: passes `f` to L
- - at initialization: passes initial value of `a` to L
+ - at initialization: passes `f` to S
+ - at initialization: passes initial value of `a` to S
  - can use specific types for `a` (e.g., Data.HashMap)
- - calls another L function `g` that calls back to `f`
+ - calls another S function `g` that calls back to `f`
  - when `f` is called it can see the internal structure (e.g., Data.HashMap) of `a`
 
 #+begin_example
-    A                              L                   L's State
+    A                              S                   S's State
       initialization
     .                              .                       .
     .                              .                       .
@@ -65,7 +65,7 @@ Here is a solution with parameterized state.
 To build and test:
 
 #+begin_example
-cd library
+cd system
 stack build
 cd app
 statck test

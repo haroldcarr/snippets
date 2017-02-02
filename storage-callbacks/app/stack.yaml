@@ -1,7 +1,7 @@
 resolver: lts-7.18
 packages:
 - '.'
-- '../library'
+- '../system'
 extra-deps: []
 flags: {}
 extra-package-dbs: []

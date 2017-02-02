@@ -1,13 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib where
+module Sys where
 
 import           Control.Concurrent.MVar
 import           Control.Monad.IO.Class
 import           Data.ByteString         (ByteString)
 import           Data.ByteString.Char8   (putStrLn)
-import           GHC.Generics            hiding (from)
 import           Prelude                 hiding (putStrLn)
+
+type CmdRequest  = ByteString
+type CmdResponse = ByteString
 
 data State m a = State
   {
@@ -15,16 +17,10 @@ data State m a = State
   , _applyLogEntry :: a -> CmdRequest -> m (a, CmdResponse)
   }
 
-newtype CmdRequest = CmdRequest { unCmdRequest :: ByteString }
-  deriving (Show, Eq)
-
-newtype CmdResponse = CmdResponse { unCmdResponse :: ByteString }
-  deriving (Show, Eq)
-
 mkState :: MonadIO m
-    => a
-    -> ((String -> IO ()) -> a -> CmdRequest -> IO (a, CmdResponse))
-    -> IO (State m a)
+        => a
+        -> ((String -> IO ()) -> a -> CmdRequest -> IO (a, CmdResponse))
+        -> IO (State m a)
 mkState nextValue applyFn = do
   mv <- newMVar nextValue
   return State { _nextValue     = mv
