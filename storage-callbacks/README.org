@@ -68,7 +68,7 @@ To build and test:
 cd system
 stack build
 cd app
-statck test
+stack test
 #+end_example
 
 See stackoverflow question:  [[http://stackoverflow.com/questions/41950524/functions-with-types-opaque-to-a-library-but-specific-to-an-application]]
