@@ -1,0 +1,35 @@
+Trying to use the =assert= package I get
+
+#+begin_example
+$ cabal2nix . > default.nix
+$ nix-shell -A env release.nix
+error: syntax error, unexpected ASSERT, expecting '}', at /Volumes/HC/.sync/.esync/openhc/snippets/nix-assert-bug/default.nix:1:17
+#+end_example
+
+If I remove =assert= from the arguments and from =libraryHaskellDepends= I can then do:
+
+#+begin_example
+$ nix-shell -A env release.nix
+
+[nix-shell]$ cabal update
+Downloading the latest package list from hackage.haskell.org
+
+[nix-shell]$ cabal configure
+...
+cabal: Encountered missing dependencies:
+assert -any
+
+[nix-shell]$ cabal install assert
+...
+Installed assert-0.0.1.2
+
+[nix-shell]$ cabal configure
+Resolving dependencies...
+Configuring nix-assert-bug-0.1.0.0...
+
+[nix-shell]$ cabal build
+Building nix-assert-bug-0.1.0.0...
+Preprocessing library nix-assert-bug-0.1.0.0...
+[1 of 1] Compiling Lib              ( Lib.hs, dist/build/Lib.o )
+#+end_example
+
