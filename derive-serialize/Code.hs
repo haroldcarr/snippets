@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module Lib where
+module Code where
 
 import           Data.ByteString
 import           Data.Serialize
