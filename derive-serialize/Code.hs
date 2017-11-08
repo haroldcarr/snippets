@@ -1,5 +1,7 @@
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Code where
 
@@ -7,23 +9,40 @@ import           Data.ByteString
 import           Data.IntervalMap.Generic.Strict
 import           Data.Serialize
 import           Data.Set
+import           Data.Word                       (Word64)
 import           GHC.Generics
 
 ------------------------------------------------------------------------------
 
-newtype LogIndex = LogIndex Int deriving (Eq, Ord, Generic)
-instance Serialize LogIndex
+newtype LogIndex = LogIndex Int
+  deriving (Show, Read, Eq, Ord, Enum, Num, Real, Integral, Generic, Serialize)
 
-newtype LogIndexInterval a = LogIndexInterval LogIndex deriving (Eq, Ord, Generic)
-instance Serialize (LogIndexInterval LogIndex)
+data LogIndexInterval a
+  = LogIndexInterval a a
+  deriving (Eq , Ord , Show , Generic)
+instance (Serialize a) => Serialize (LogIndexInterval a)
 
-newtype ActiveAssignment = ActiveAssignment Int deriving (Eq, Ord, Generic)
+data NodeID = NodeID { _host :: !String, _port :: !Word64, _fullAddr :: !String }
+  deriving (Eq,Ord,Read,Generic)
+instance Show NodeID where
+  show = ("NodeID " ++) . _fullAddr
+instance Serialize NodeID
+
+data ActiveAssignment = ActiveAssignment
+  { _activeAssignmentActiveInterval :: !(LogIndexInterval LogIndex)
+  , _activeAssignmentNodeID         :: !NodeID
+  }
+  deriving (Eq, Show, Ord, Generic)
 instance Serialize ActiveAssignment
 
-data ActiveAssignments
-  = IntervalMap (LogIndexInterval LogIndex) (Set ActiveAssignment)
-  deriving (Eq, Ord, Generic)
+type ActiveAssignments = IntervalMap (LogIndexInterval LogIndex) (Set ActiveAssignment)
+
+{-
+instance (Generic a, Generic b) => Generic (IntervalMap a b)
+instance (Generic a, Generic b, Serialize a, Serialize b) => Serialize (IntervalMap a b)
+instance Generic   ActiveAssignments
 instance Serialize ActiveAssignments
+-}
 
 ------------------------------------------------------------------------------
 
