@@ -19,7 +19,7 @@ run :: IO (Bool         , ByteString, Either String           Bool,
 run = do
   let xs = True
   let ys = Leaf :: UserTree Bool
-  let zs = Node (Data.Set.singleton False) Leaf Leaf :: UserTree Bool
+  let zs = Node (Data.Set.singleton False) Leaf Leaf
   let exs = encode xs
   let eys = encode ys
   let ezs = encode zs
