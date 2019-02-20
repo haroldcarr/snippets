@@ -4,7 +4,7 @@
 module Code where
 
 import           Data.ByteString
-import           Data.IntervalMap.Generic.Strict
+import           Data.IntervalMap.Generic.Strict as IM
 import           Data.Serialize
 import           Data.Set
 import           Data.Word                       (Word64)
@@ -32,6 +32,13 @@ data ActiveAssignment = ActiveAssignment
   }
   deriving (Eq, Show, Ord, Generic)
 instance Serialize ActiveAssignment
+
+newtype OBMIntervalMap k v
+  = OBMIntervalMap { unOBMIntervalMap :: IntervalMap k v }
+  deriving (Eq, Show, Ord, Generic)
+instance (Serialize k, Serialize v) => Serialize (OBMIntervalMap k v) where
+  put = put . IM.toList . unOBMIntervalMap
+  get = OBMIntervalMap . IM.fromList . get
 
 type ActiveAssignments = IntervalMap (LogIndexInterval LogIndex) (Set ActiveAssignment)
 
