@@ -10,17 +10,33 @@ import           Data.Foldable   (foldr')
 import qualified Data.Map.Strict as Map
 import           Test.Hspec
 
-c220 = Command 2 (RequestId (Nonce 2) 0)
-c221 = Command 2 (RequestId (Nonce 2) 1) -- different shard
-c230 = Command 2 (RequestId (Nonce 3) 0)
-c310 = Command 3 (RequestId (Nonce 1) 0)
+mkCmd :: NodeId -> Int -> ShardId -> Command
+mkCmd nid n s = Command nid (RequestId (Nonce n) s)
 
+c220 = mkCmd 2 2 0
+c221 = mkCmd 2 2 1 -- different shard
+c230 = mkCmd 2 3 0
+c310 = mkCmd 3 1 0
+
+mkPR :: [Command] -> PendingRequests
+mkPR  = foldr' addToPR Map.empty
+
+mkPR' :: Int -> Int -> PendingRequests
+mkPR' numNodes numCmdsPerNode =
+  foldr' addToPR Map.empty mkPR''
+ where
+  mkPR'' = do
+    nid   <- [1 .. numNodes] :: [Int]
+    nonce <- [1 .. numCmdsPerNode]
+    pure (Command nid (RequestId (Nonce nonce) 0))
+
+------------------------------------------------------------------------------
 spec :: Spec
 spec  = describe "pending requests" $ do
   addTo
   rmFrom
   rmAllBelow
-  shuffle
+  roundRobin
 
 ------------------------------------------------------------------------------
 addTo :: Spec
@@ -115,24 +131,20 @@ rmAllBelow  = do
     []
 
 ------------------------------------------------------------------------------
-shuffle :: Spec
-shuffle  = do
-  s1 <- runIO (shufflePR [])
-  it "shuffle empty/empty" $
-    s1
+roundRobin :: Spec
+roundRobin  = do
+  it "roundRobinPR empty/empty" $
+    roundRobinPR 99 []
     `shouldBe`
     []
 
-  let pr55 = mkPR 5 5
-  s2 <- runIO (shufflePR pr55)
-  it "shuffle empty/empty" $
-    s2
+  it "roundRobinPR empty/empty" $
+    roundRobinPR 99 (addToPR (mkCmd 3 0 0) (mkPR' 2 2))
     `shouldBe`
-    [] -- intentionally wrong to see the random output when running test
+    [ mkCmd 1 1 0
+    , mkCmd 2 1 0
+    , mkCmd 3 0 0
+    , mkCmd 1 2 0
+    , mkCmd 2 2 0
+    ]
 
-mkPR :: Int -> Int -> PendingRequests
-mkPR numNodes numCmdsPerNode =
-  foldr' goOuter Map.empty ([0 .. numNodes] :: [Int])
- where
-  goOuter nid acc = foldr' (goInner nid) acc ([0 .. numCmdsPerNode] :: [Int])
-  goInner nid nonce = addToPR (Command nid (RequestId (Nonce nonce) 0))

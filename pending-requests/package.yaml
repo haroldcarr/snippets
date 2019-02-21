@@ -7,9 +7,6 @@ dependencies:
 - bytestring
 - containers
 - lens
-- MonadRandom
-- random
-- random-shuffle
 
 library:
   source-dirs: src

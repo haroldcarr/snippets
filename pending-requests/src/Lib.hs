@@ -4,11 +4,11 @@
 module Lib where
 
 import           Control.Lens
-import           Control.Monad.Random.Class
+import           Data.List       (sortOn)
 import qualified Data.Map.Strict as Map
+import           Data.Maybe      (mapMaybe)
+import           Data.Ord        (comparing)
 import qualified Data.ByteString as BS
-import           System.Random
-import           System.Random.Shuffle
 
 type NodeId  = Int
 type ShardId = Int
@@ -36,20 +36,28 @@ rmFromPR :: Command -> PendingRequests -> PendingRequests
 rmFromPR c@Command {..} pr =
   pr & at _cmdClientId . non Map.empty . at (_ridNonce _cmdRequestId) .~ Nothing
 
-rmAllBelowPR :: NodeId -> Int -> PendingRequests -> PendingRequests
+rmAllBelowPR :: NodeId -> Nonce -> PendingRequests -> PendingRequests
 rmAllBelowPR nid i pr =
   case Map.lookup nid pr of
     Nothing    -> pr
     Just inner ->
-      let inner' = Map.dropWhileAntitone (\(Nonce k) -> k < i) inner
+      let inner' = Map.dropWhileAntitone (< i) inner
        in if Map.null inner'
             then Map.delete nid pr
             else Map.insert nid inner' pr
 
--- TODO : this should shuffle by NodeId, but keep Nonce for each NodeId monotonically increasing.
-shufflePR :: MonadRandom m => PendingRequests -> m [Command]
-shufflePR pr =
-  shuffleM (concatMap Map.elems (Map.elems pr))
-
-
+-- TODO : make more efficient version
+roundRobinPR :: Int -> PendingRequests -> [Command]
+roundRobinPR i pr =
+  rr [] i (map (sortOn (_ridNonce . _cmdRequestId) . Map.elems)
+               (Map.elems pr))
+ where
+  rr :: [[Command]] -> Int -> [[Command]] -> [Command]
+  rr acc 0  _     = concat (reverse acc)
+  rr acc _ []     = concat (reverse acc)
+  rr acc n xs     = rr (mapMaybe safeHead xs : acc) (n - 1) (mapMaybe safeTail xs)
+  safeHead    []  = Nothing
+  safeHead (x: _) = Just x
+  safeTail    []  = Nothing
+  safeTail (_:xs) = Just xs
 
