@@ -1,0 +1,45 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 03079b6b245742f9765f521103cb799c80fe1a0058874613d56621e3c463649d
+
+name:           aer-quorum
+version:        0.1.0.0
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_aer_quorum
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , lens
+  default-language: Haskell2010
+
+test-suite aer-quorum-test
+  type: exitcode-stdio-1.0
+  main-is: hspec.hs
+  other-modules:
+      AERQSpec
+      Paths_aer_quorum
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aer-quorum
+    , base >=4.7 && <5
+    , containers
+    , hspec
+    , hspec-expectations
+    , lens
+  default-language: Haskell2010

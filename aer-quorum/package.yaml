@@ -1,10 +1,9 @@
-name:                pending-requests
+name:                aer-quorum
 version:             0.1.0.0
 license:             BSD3
 
 dependencies:
 - base >= 4.7 && < 5
-- bytestring
 - containers
 - lens
 
@@ -15,7 +14,7 @@ library:
   source-dirs: src
 
 tests:
-  pending-requests-test:
+  aer-quorum-test:
     source-dirs:         test
     main:                hspec.hs
     ghc-options:
@@ -23,6 +22,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - aer-quorum
     - hspec
     - hspec-expectations
-    - pending-requests
