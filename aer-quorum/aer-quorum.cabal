@@ -4,12 +4,11 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 03079b6b245742f9765f521103cb799c80fe1a0058874613d56621e3c463649d
+-- hash: 1dbb9c3eb8586ff4c17e6669d8338befd020dff82209b534841e08380cca25ed
 
 name:           aer-quorum
 version:        0.1.0.0
 license:        BSD3
-license-file:   LICENSE
 build-type:     Simple
 
 library
