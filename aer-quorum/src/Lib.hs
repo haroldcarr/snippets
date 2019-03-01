@@ -9,7 +9,6 @@ import           Data.Ord        (Down (..))
 
 {-# ANN module ("HLint: ignore Eta reduce" :: String) #-}
 
-
 newtype LogIndex              = LogIndex       Int       deriving (Show, Eq, Ord)
 newtype Term                  = Term           Int       deriving (Show, Eq, Ord)
 newtype NodeId                = NodeId         Int       deriving (Show, Eq, Ord)
@@ -34,7 +33,7 @@ fakeAER :: Term -> NodeId -> LogIndex -> CumulativeHash -> Bool -> AppendEntries
 fakeAER t n l c b = AppendEntriesResponse t l n Success Convinced c b
 
 fakeCumulativeHash :: String -> CumulativeHash
-fakeCumulativeHash = CumulativeHash
+fakeCumulativeHash  = CumulativeHash
 
 aerqInsertMany :: [AppendEntriesResponse] -> AERQuorum -> Either (String, AERQuorum) AERQuorum
 aerqInsertMany aers m =
@@ -45,13 +44,17 @@ aerqInsertMany aers m =
 -- associated NodeId removed.
 aerqInsert :: AppendEntriesResponse -> AERQuorum -> Either (String, AERQuorum) AERQuorum
 aerqInsert aer aerq =
-  case aerqLookup aer aerq of
-    Nothing ->
-      return $ aerqInsertUnconditional aer aerq
-    Just e  ->
-      if _aerHash e == _aerHash aer
-      then return aerq
-      else Left (mkAerqInsertError aer e, aerqDeleteAllForNodeId (_aerNodeId e) aerq)
+  if _aerSuccess aer /= Success || _aerConvinced aer /= Convinced
+  then Left (mkAerqInsertSucConError aer, aerq)
+  else
+    case aerqLookup aer aerq of
+      Nothing ->
+        return $ aerqInsertUnconditional aer aerq
+      Just e  ->
+        if _aerHash e == _aerHash aer
+        then return aerq
+        else Left ( mkAerqInsertHashDiffError aer e
+                  , aerqDeleteAllForNodeId (_aerNodeId e) aerq )
 
 -- https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Iso.html#v:non
 aerqInsertUnconditional :: AppendEntriesResponse -> AERQuorum -> AERQuorum
@@ -60,8 +63,12 @@ aerqInsertUnconditional aer@AppendEntriesResponse {..} aerq =
        .  at _aerNodeId
        ?~ aer
 
-mkAerqInsertError :: AppendEntriesResponse -> AppendEntriesResponse -> String
-mkAerqInsertError a1 a2 =
+mkAerqInsertSucConError :: AppendEntriesResponse -> String
+mkAerqInsertSucConError a =
+  "aerqmInsert: AER with unsuccessful or not convinced; " ++ show a
+
+mkAerqInsertHashDiffError :: AppendEntriesResponse -> AppendEntriesResponse -> String
+mkAerqInsertHashDiffError a1 a2 =
   "aerqmInsert: AER with different hash; " ++ show a1 ++ "; " ++ show a2
 
 aerqLookup :: AppendEntriesResponse -> AERQuorum -> Maybe AppendEntriesResponse

@@ -22,8 +22,9 @@ aer2  = fAER 1 1 2 "aer2"
 
 spec :: Spec
 spec  = do
-  honestInsert
-  dishonestInsert
+  insertHonest
+  insertDishonest
+  insertUnsuccessfulUnconvinced
   getQuorum
 
 getQuorum :: Spec
@@ -52,7 +53,7 @@ getQuorum  = describe "getQuorum" $ do
     `shouldBe`
     Right Nothing
 
-  it "quorum --" $
+  it "quorum ==" $
     aerqGetQuorum 4 <$> aerqInsertMany (take 4 xT1LI1) Map.empty
     `shouldBe`
     Right (Just (LogIndex 1,[(Term 1, take 4 xT1LI1)]))
@@ -74,8 +75,8 @@ getQuorum  = describe "getQuorum" $ do
     Right (Just (LogIndex 1,[(Term 2, take 4 xT2LI1)
                             ,(Term 1, take 4 xT1LI1)]))
 
-honestInsert :: Spec
-honestInsert  = describe "honestInsert" $
+insertHonest :: Spec
+insertHonest  = describe "insertHonest" $
   it "aerqInsert same AER twice" $
     (aerqInsert aer1 Map.empty >>= aerqInsert aer1)
     `shouldBe`
@@ -84,22 +85,41 @@ honestInsert  = describe "honestInsert" $
 -- if someone lies
 -- - they should have no influence (so they should be completely removed)
 -- - they should not be able to interfere with honest ones
-dishonestInsert :: Spec
-dishonestInsert  = describe "dishonestInsert" $ do
+insertDishonest :: Spec
+insertDishonest  = describe "insertDishonest" $ do
   it "insert good after: aerqInsert same AER twice - but with different CumulativeHash-s" $
     (aerqInsert aer1 Map.empty >>= aerqInsert aer1' >>= aerqInsert aer2)
     `shouldBe`
-    Left (mkAerqInsertError aer1' aer1, Map.empty)
+    Left (mkAerqInsertHashDiffError aer1' aer1, Map.empty)
 
   it "insert good middle: aerqInsert same AER twice - but with different CumulativeHash-s" $
     let Right xx = aerqInsert aer2 Map.empty
      in (aerqInsert aer1 Map.empty >>= aerqInsert aer2 >>= aerqInsert aer1')
         `shouldBe`
-        Left (mkAerqInsertError aer1' aer1, xx)
+        Left (mkAerqInsertHashDiffError aer1' aer1, xx)
 
   it "insert good before: aerqInsert same AER twice - but with different CumulativeHash-s" $
     let Right xx = aerqInsert aer2 Map.empty
      in (aerqInsert aer2 Map.empty >>= aerqInsert aer1 >>= aerqInsert aer1')
         `shouldBe`
-        Left (mkAerqInsertError aer1' aer1, xx)
+        Left (mkAerqInsertHashDiffError aer1' aer1, xx)
 
+insertUnsuccessfulUnconvinced :: Spec
+insertUnsuccessfulUnconvinced  = describe "insertUnsuccessfulUnconvinced" $ do
+  it "unsuccessful" $
+    let aerF = aer1 { _aerSuccess = Failure }
+     in aerqInsert aerF Map.empty
+        `shouldBe`
+        Left (mkAerqInsertSucConError aerF, Map.empty)
+
+  it "unconvinced" $
+    let aerNC = aer1 { _aerConvinced = NotConvinced }
+     in aerqInsert aerNC Map.empty
+        `shouldBe`
+        Left (mkAerqInsertSucConError aerNC, Map.empty)
+
+  it "unsuccessful and unconvinced" $
+    let aerFNC = aer1 { _aerSuccess = Failure, _aerConvinced = NotConvinced }
+     in aerqInsert aerFNC Map.empty
+        `shouldBe`
+        Left (mkAerqInsertSucConError aerFNC, Map.empty)
