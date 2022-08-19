@@ -1,0 +1,818 @@
+
+- =M-x list-packages=
+- find =eev= and install
+- =M-x eev-beginner=
+- leave the "eev-beginner" file that pops up (but do not kill it)
+- go back to this file
+
+Now function key F8 will send things from this file to a shell.
+
+#+begin_src
+# start shell
+ (eepitch-shell)
+# kill shell (to be fresh, in case it was already running)
+ (eepitch-kill)
+# start shell
+ (eepitch-shell)
+#+end_src
+
+------------------------------------------------------------------------------
+* install keripy and nix support
+
+** clone keripy
+
+#+begin_src
+git clone https://github.com/WebOfTrust/keripy
+pushd keripy
+#+end_src
+
+** pin nixpkgs via =niv=
+
+#+begin_src
+nix-shell -j4 -E \
+  'let nixpkgs-src = builtins.fetchTarball {
+       # this commit is tagged 22.05
+       url = "https://github.com/NixOS/nixpkgs/archive/ce6aa13369b667ac2542593170993504932eb836.tar.gz";
+       };
+       nixpkgs = import nixpkgs-src {};
+    in nixpkgs.mkShell { buildInputs = [ nixpkgs.niv ]; }'
+
+# niv init puts reference to latest nixpkgs in 'sources.json'
+niv init
+
+# update version to use (same as 22.05 above)
+niv update nixpkgs --branch nixpkgs-unstable --rev ce6aa13369b667ac2542593170993504932eb836
+exit
+#+end_src
+
+** shell.nix
+
+from https://nixos.wiki/wiki/Python :  Development shell
+
+#+begin_src
+cat << 'EOF' > shell.nix
+let
+  sources                 = import ./nix/sources.nix {};
+  pkgs                    = import sources.nixpkgs {};
+  python-version          = pkgs.python310;
+  python-with-my-packages = python-version.withPackages (p: with p; [
+    pip
+    pytest
+    virtualenv
+  ]);
+in
+pkgs.mkShell {
+  buildInputs = [
+    python-with-my-packages
+    # other dependencies
+  ];
+  shellHook = ''
+    PYTHONPATH=${python-with-my-packages}/${python-with-my-packages.sitePackages}
+    # maybe set more env-vars
+  '';
+}
+EOF
+#+end_src
+
+------------------------------------------------------------------------------
+<<keripy-development-shell>>
+* keripy development shell
+
+#+begin_src
+ (eepitch-shell)
+cd keripy
+nix-shell shell.nix
+python -m venv keripy
+source keripy/bin/activate
+pip install -r requirements.txt
+# PYTHONPATH is specific to your installation, see instructions below
+export PYTHONPATH=".":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python310.zip":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10/lib-dynload":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/keripy/lib/python3.10/site-packages":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/src":${PYTHONPATH}
+#+end_src
+
+=PYTHONPATH= above is found by following instructions at [[keripy-PYTHONPATH][keripy PYTHONPATH]]
+
+** test keripy
+
+in a development shell
+
+#+begin_src
+pytest tests/ --ignore tests/demo/
+pytest tests/demo/
+#+end_src
+
+<<keripy-PYTHONPATH>>
+** keripy PYTHONPATH
+
+=PYTHONPATH= above was set by looking at =sys.path= in a keripy development shell:
+
+#+begin_src
+python
+import sys
+sys.path
+
+#+end_src
+
+------------------------------------------------------------------------------
+* Build and test vLEI
+
+#+begin_src
+ (eepitch-shell2)
+#+end_src
+
+** clone vLEI
+
+#+begin_src
+git clone git@github.com:WebOfTrust/vLEI.git
+cd vLEI
+#+end_src
+
+** nix stuff
+
+#+begin_src
+cp -rp ../keripy/nix .
+cp ../keripy/shell.nix .
+#+end_src
+
+<<vLEI-development-shell>>
+** vLEI development shell
+
+#+begin_src
+cd vLEI
+nix-shell shell.nix
+python -m venv vLEI
+source vLEI/bin/activate
+pip install -r requirements.txt
+#+end_src
+
+find the setting for this as was done for [[keripy-PYTHONPATH][keripy-PYTHONPATH]]
+
+#+begin_src
+export PYTHONPATH=".":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python310.zip":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10/lib-dynload":"/Users/hcarr/ws/OLABS/0-next/KERI/vLEI/vLEI/lib/python3.10/site-packages":"/Users/hcarr/ws/OLABS/0-next/KERI/vLEI/src":${PYTHONPATH}
+#+end_src
+
+** test vLEI
+
+#+begin_src
+pytest tests
+#+end_src
+
+------------------------------------------------------------------------------
+* ./keripy/scripts/demo/vLEI/issue-xbrl-attestation.sh
+
+in a [[keripy-development-shell][keripy development shell]]
+
+#+begin_src
+ (eepitch-shell)
+rm -rf /usr/local/var/keri/
+
+kli witness demo
+#+end_src
+
+in a [[vLEI-development-shell][vLEI development shell]]
+
+#+begin_src
+ (eepitch-shell2)
+vLEI-server -s ./schema/acdc -c ./samples/acdc/ -o ./samples/oobis/
+#+end_src
+
+in another [[keripy-development-shell][keripy development shell]]
+
+#+begin_src
+ (eepitch-shell3)
+source ./scripts/demo/demo-scripts.sh
+./scripts/demo/vLEI/issue-xbrl-attestation.sh
+
+rm -rf /usr/local/var/keri/
+#+end_src
+
+------------------------------------------------------------------------------
+* ./keripy/scripts/demo/basic/alice-bob-agent.sh
+
+in a [[keripy-development-shell][keripy development shell]]
+
+#+begin_src
+ (eepitch-shell)
+rm -rf /usr/local/var/keri/
+
+kli agent demo --config-file demo-witness-oobis
+#+end_src
+
+in another [[keripy-development-shell][keripy development shell]]
+
+#+begin_src
+ (eepitch-shell2)
+kli witness demo
+#+end_src
+
+in another [[keripy-development-shell][keripy development shell]]
+
+#+begin_src
+ (eepitch-shell3)
+source ./scripts/demo/demo-scripts.sh
+./scripts/demo/basic/alice-bob-agent.sh
+
+rm -rf /usr/local/var/keri/
+#+end_src
+
+------------------------------------------------------------------------------
+* agent endpoint
+
+#+begin_src
+curl -s -X GET "http://localhost:5623/spec.yaml"
+curl -s -X GET "http://localhost:5623/ids"
+curl -s -X GET "http://localhost:5623/ids/Alice"
+curl -s -X GET "http://localhost:5623/registries"
+curl -s -X GET "http://localhost:5623/challenge"
+curl -s -X GET "http://localhost:5623/contacts"
+curl -s -X GET "http://localhost:5623/notifications"
+curl -s -X GET "http://localhost:5623/schema"
+curl -s -X GET "http://localhost:5623/escrows"
+curl -s -X GET "http://localhost:5623/mbx"
+#+end_src
+
+------------------------------------------------------------------------------
+* ref/getting_started.md
+
+[[./keripy/ref/getting_started.md]]
+
+in a nix shell with python virtualenv setup
+
+#+begin_src
+python
+
+import json
+def ppjson(srdr):
+    print(json.dumps(json.loads(srdr.raw.decode("utf-8")), indent=4, sort_keys=False))
+
+import keri.core.eventing as eventing
+import keri.core.coring as coring
+import keri.app.keeping as keeping
+import keri.db.dbing as dbing
+#+end_src
+
+** Transferability
+
+KERI supports transferable IDs and non transferable (ephemeral) IDs.
+
+** ID Types
+- Basic
+- Self-Addressing
+- Multi-Sig Self-Addressing
+- Delegated Self-Addressing
+
+*** Basic
+
+basic self-certifying ID
+- includes prefix composed of
+- Base-64 (URL safe) derivation code prepended to
+- Base-64 encoding of PK
+
+**** Inception
+
+***** Basic Non Transferable ID
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt             = coring.Salter().qb64
+    mgr              = keeping.Manager(ks=kpr, salt=salt)
+    verfers, _, _, _ = mgr.incept(icount=1, ncount=0)
+    # code marks this ID as basic
+    srdr             = eventing.incept(keys=[verfers[0].qb64], code=coring.MtrDex.Ed25519)
+    ppjson(srdr)
+
+#+end_src
+
+***** Basic Transferable ID
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
+    keys                 = [verfers[0].qb64]
+    # code marks this ID as basic
+    srdr                  = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Ed25519)
+    ppjson(srdr)
+
+#+end_src
+
+**** Rotation
+
+***** Non Transferable
+
+- Cannot rotate non-tranferable IDs.
+- Cannot change transferable ID to non transferable ID after inception.
+  - Can rotate to a null key(s) effectively abandoning the ID.
+
+***** Rotation of Basic Transferable ID
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
+    keys                  = [verfers[0].qb64]
+    srdr                  = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Ed25519)  # code marks this ID as basic
+    ppjson(srdr)
+    # -------------------------------Basic Rotation-----------------------------
+    # generate new keys
+    verfers, digers, _, _ = mgr.rotate(verfers[0].qb64)
+    # create rotation event
+    ID                    = srdr.pre
+    keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
+    icpDigest             = srdr.saider.qb64
+    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=nkeys, sn=1)
+    ppjson(srdr)
+
+#+end_src
+
+*** Self-Addressing
+
+Self addressing ID has inception config data included in inception statement.
+Inception statement bound to ID by replacing PK in ID prefix
+with digest (hash) of inception statement and incepting PK.
+
+**** Inception
+
+***** Non Transferable
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt             = coring.Salter().qb64
+    mgr              = keeping.Manager(ks=kpr, salt=salt)
+    # set a non transferable derivation code
+    verfers, _, _, _ = mgr.incept(icount=1, ncount=0, transferable=False)
+    # code marks ID as self-addressing
+    srdr             = eventing.incept(keys=[verfers[0].qb64], code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+    # ----------Abandoned Self-Addressing ID(Non Transferable)----------
+    # Has a transferable derivation code, but contains an empty pre-rotation key.
+    # Essentially the ID has been abandoned.
+    # Example is for illustration purposes.
+    # Should never need to abandon a self-addressing ID on inception.
+    # Normally this is done with a rotation.
+    salt             = coring.Salter().qb64
+    mgr              = keeping.Manager(ks=kpr, salt=salt)
+    verfers, _, _, _ = mgr.incept(icount=1, ncount=0, transferable=True)
+    # empty nxt i.e. abandoned
+    srdr             = eventing.incept(keys=[verfers[0].qb64], code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+
+#+end_src
+
+***** Transferable
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
+    keys                  = [verfers[0].qb64]
+    # code marks ID as self-addressing
+    srdr                  = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+
+#+end_src
+
+**** Rotation
+
+***** Non Transferable
+
+NO
+
+***** Transferable
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
+    keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
+    # code marks ID as self-addressing
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+    # --------------------------Self-Addressing Rotation------------------------
+    # generate new keys
+    verfers, digers, _, _ = mgr.rotate(verfers[0].qb64)
+    # create rotation event
+    ID                    = srdr.pre
+    keys                  = [verfers[0].qb64]
+    icpDigest             = srdr.saider.qb64
+    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=[digers[0].qb64], sn=1)
+    ppjson(srdr)
+
+#+end_src
+
+*** Multi-Sig Basic (not supported by KERI)
+
+*** Multi-Sig Self-Addressing
+
+**** Inception
+
+***** Non Transferable
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt             = coring.Salter().qb64
+    mgr              = keeping.Manager(ks=kpr, salt=salt)
+    verfers, _, _, _ = mgr.incept(icount=3, ncount=0, transferable=False)
+    # code marks ID as self-addressing
+    srdr             = eventing.incept(keys=[verfer.qb64 for verfer in verfers], code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+
+#+end_src
+
+***** Transferable
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=3, ncount=3, transferable=True)
+    keys                  = [verfer.qb64 for verfer in verfers]
+    # code marks ID as self-addressing
+    srdr                  = eventing.incept(keys=keys, nkeys=[diger.qb64 for diger in digers], code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+
+#+end_src
+
+**** Rotation
+
+***** Non Transferable
+
+NO
+
+***** Transferable
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=3, ncount=3, transferable=True)
+    keys                  = [verfer.qb64 for verfer in verfers]
+    nkeys                 =[diger.qb64 for diger in digers]
+    # code marks ID as self-addressing
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Blake3_256)
+    ppjson(srdr)
+    # ---------Self-Addressing Transferable Multisig ID Rotation--------
+    # generate 3 new keys
+    verfers, digers, _, _ = mgr.rotate(verfers[0].qb64, count=3)
+    # create rotation event
+    ID                    = srdr.pre
+    keys                  = [verfer.qb64 for verfer in verfers]
+    nkeys                 =[digers[0].qb64]
+    icpDigest             = srdr.saider.qb64
+    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=nkeys, sn=1)
+    ppjson(srdr)
+
+#+end_src
+
+*** Delegated Basic (not supported by KERI)
+
+*** Delegated Self-Addressing
+
+**** Inception
+
+***** Non Transferable
+
+***** Transferable
+
+**** Rotation
+
+***** Non Transferable
+
+NO
+
+***** Transferable
+
+** Message Types
+
+messages types : Events and Receipts
+
+*** Events
+
+contain info about controllers ID and it's current or past key state.
+
+See https://github.com/WebOfTrust/keri/blob/master/kids/kid0003.md#element-labels
+for explanations of different keys meanings.
+
+types of event messages:
+
+- inception
+#+begin_example
+    {
+      "v":"KERI10JSON0000e6_",
+      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
+      "s":"0",
+      "t":"icp",
+      "kt":"1",
+      "k":[
+        "Dpt7mGZ3y5UmhT1NLExb1IW8vMJ8ylQW3K44LfkTgAqE"
+      ],
+      "n":"Erpltchg7BUv21Qz3ZXhOhVu63m7S7YbPb21lSeGYd90",
+      "wt":"0",
+      "w":[],
+      "c":[]
+    }
+#+end_example
+
+- rotation
+
+#+begin_example
+    {
+      "v":"KERI10JSON000122_",
+      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
+      "s":"1",
+      "t":"rot",
+      "p":"Ey2pXEnaoQVwxA4jB6k0QH5G2Us-0juFL5hOAHAwIEkc",
+      "kt":"1",
+      "k":[
+        "D-HwiqmaETxls3vAVSh0xpXYTs94NUJX6juupWj_EgsA"
+      ],
+      "n":"ED6lKZwg-BWl_jlCrjosQkOEhqKD4BJnlqYqWmhqPhaU",
+      "wt":"0",
+      "wr":[],
+      "wa":[],
+      "a":[]
+    }
+#+end_example
+
+- delegated inception
+
+#+begin_example
+...
+#+end_example
+
+- delegated rotation
+
+#+begin_example
+...
+#+end_example
+
+- interaction
+
+#+begin_example
+    {
+      "v":"KERI10JSON000098_",
+      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
+      "s":"2",
+      "t":"ixn",
+      "p":"EO7V6wDClWWiN_7sfGDTD8KsfRQaHyap6fz_O4CYvsek",
+      "a":[]
+    }
+#+end_example
+
+*** Receipts
+
+used to confirm and/or prove that witness or validator received an event message.
+
+receipt signed by validator/witness
+
+used to detect duplicity if witness/validator tries to claim it never saw the event.
+
+-  Witness Receipts
+#+begin_example
+...
+#+end_example
+
+- Validator Receipts
+#+begin_example
+    {
+      "v":"KERI10JSON000105_",
+      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
+      "s":"2",
+      "t":"vrc",
+      "d":"EuCLxtdKdRgzzgBnPhTwFKz36u58DqQyMqhX5CUrurPE",
+      "a":{
+        "i":"EBiIFxr_o1b4x1YR21PblAFpFG61qDghqFBDyVSOXYW0",
+        "s":"0",
+        "d":"ElsHFkbZQjRb7xHnuE-wyiarIZ9j-1CEQ89I0E3WevcE"
+      }
+    }
+#+end_example
+
+** Modes
+
+Direct Replay Mode(Direct Mode)
+
+Indirect Replay Mode(Indirect Mode).
+
+*** Direct Mode
+
+used to communicate directly with another entity
+without reliance on supporting infrastructure like witness/validators
+
+*** Indirect Mode
+
+needs infrastructure like witness/validators
+
+supports all direct mode options and additional options
+
+** Event Life Cycle
+
+**** Creating An Inception Event Message
+
+Creating an event message involves appending count code prefixes and signatures
+to an event object. Done by =messagize=
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    # Basic Transferable ID
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1)
+    keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
+    sigers                = mgr.sign(ser=srdr.raw, verfers=verfers)
+    # Create the message
+    msg                   = eventing.messagize(srdr, sigers=sigers)
+    print(msg)
+
+#+end_src
+
+**** Signing An Inception Event
+
+for event to be valid it must be signed
+
+Manager can sign an event to create signatures.
+
+Sigs not yet attached to event.
+
+See below for how to attach.
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    # Basic Transferable ID
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1)
+    keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
+    # Create Signatures
+    sigers                = mgr.sign(ser=srdr.raw, verfers=verfers)
+    print(sigers)
+    print(sigers[0].qb64)
+
+#+end_src
+
+**** Verifying An Inception Event Message
+
+#+begin_src
+import keri.core.parsing as parsing
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    # -----------------------Basic Transferable ID----------------------
+    salt = coring.Salter().qb64
+    mgr = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1)
+    keys = [verfers[0].qb64]
+    srdr = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Ed25519)
+    sigers = mgr.sign(ser=srdr.raw, verfers=verfers)
+    # Create the message
+    msg = eventing.messagize(srdr, sigers=sigers)
+    # --------------------------------Validation--------------------------------
+    kevery = eventing.Kevery(db=db)
+    valid = True
+    print(parsing.Parser().parseOne(ims=msg, kvy=kevery))
+
+#+end_src
+
+**** Rotating Keys
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    # Basic Transferable ID
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
+    keys                  = [verfers[0].qb64]
+    nkeys                 =[digers[0].qb64]
+    # code marks this ID as basic
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
+    ppjson(srdr)
+    # Basic Rotation
+    # generate new keys
+    verfers, digers, _, _ = mgr.rotate(verfers[0].qb64)
+    # create rotation event
+    ID                    = srdr.pre
+    keys                  = [verfers[0].qb64]
+    nkeys                 =[digers[0].qb64]
+    icpDigest             = srdr.saider.qb64
+    # Create rotation event
+    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=nkeys, sn=1)
+    ppjson(srdr)
+
+#+end_src
+
+**** Interaction
+
+**** Abandonment
+
+Abandonment/revocation is subset of rotation.
+
+events always include a pre rotated key.
+
+To abandon an ID a rotation event is created
+where the pre rotated key is set to an empty string or null.
+
+#+begin_src
+with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
+    # Basic Transferable ID
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
+    verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
+    keys                  = [verfers[0].qb64]
+    nkeys                 =[digers[0].qb64]
+    # code marks this ID as basic
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
+    ppjson(srdr)
+    # Basic Abandonment
+    # grab inception next keys but generate no next keys for rotation
+    verfers, digers, _, _ = mgr.rotate(verfers[0].qb64, count=0)
+    # create rotation event
+    ID                    = srdr.pre
+    keys                  = [verfers[0].qb64]
+    icpDigest             = srdr.saider.qb64
+    # nxt is empty i.e. abandoned
+    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, sn=1)
+    ppjson(srdr)
+
+#+end_src
+
+** look inside
+
+#+begin_src
+# do this at the beginning of a "session"
+db0  = dbing.openLMDB(name="edy")
+kpr0 = keeping.openKS(name="edy")
+db   = db0.__enter__()
+kpr  = kpr0.__enter__()
+
+salt = coring.Salter().qb64
+salt
+
+# ./keripy/src/keri/app/keeping.py
+
+mgr = keeping.Manager(ks=kpr, salt=salt)
+mgr
+mgr.ks
+mgr.encrypter
+mgr.decrypter
+mgr.inited
+mgr.seed
+mgr.aeid
+mgr.pidx
+mgr.salt
+mgr.tier
+
+verfers, digers, cst, nst = mgr.incept(icount=1, ncount=1, transferable=True)
+verfers, digers, cst, nst = mgr.incept(icount=5, ncount=5, transferable=True)
+
+# ./keripy/src/keri/core/coring.py
+
+verfers
+verfers[0].code
+verfers[0].both
+verfers[0].size
+verfers[0].rize
+verfers[0].raw
+verfers[0].qb64
+verfers[0].qb64b
+verfers[0].qb2
+verfers[0].transferable
+verfers[0].digestive
+
+# ./keripy/src/keri/core/coring.py
+
+digers
+digers[0].pad
+digers[0].code
+digers[0].raw
+digers[0].index
+digers[0].qb64
+digers[0].transferable
+digers[0].verify
+digers[0].compare
+
+cst
+nst
+
+keys  = [v.qb64 for v in verfers]
+nkeys = [d.qb64 for d in digers]
+key
+nkeys
+
+# ./keripy/src/keri/core/eventing.py
+
+srdr = eventing.incept(keys=keys,              code=coring.MtrDex.Ed25519)
+srdr = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Blake3_256)
+
+ppjson(srdr)
+
+# do this at the end of a "session"
+db0.__exit__(None, None, None)
+kpr0.__exit__(None, None, None)
+#+end_src
