@@ -276,8 +276,9 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     salt             = coring.Salter().qb64
     mgr              = keeping.Manager(ks=kpr, salt=salt)
     verfers, _, _, _ = mgr.incept(icount=1, ncount=0)
+    keys             = [verfers[0].qb64]
     # code marks this ID as basic
-    srdr             = eventing.incept(keys=[verfers[0].qb64], code=coring.MtrDex.Ed25519)
+    srdr             = eventing.incept(keys=keys, code=coring.MtrDex.Ed25519)
     ppjson(srdr)
 
 #+end_src
