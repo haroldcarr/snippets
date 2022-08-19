@@ -289,9 +289,10 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     salt                  = coring.Salter().qb64
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
-    keys                 = [verfers[0].qb64]
+    keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     # code marks this ID as basic
-    srdr                  = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Ed25519)
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
     ppjson(srdr)
 
 #+end_src
@@ -312,7 +313,8 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
     keys                  = [verfers[0].qb64]
-    srdr                  = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Ed25519)  # code marks this ID as basic
+    nkeys                 = [digers[0].qb64]
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)  # code marks this ID as basic
     ppjson(srdr)
     # -------------------------------Basic Rotation-----------------------------
     # generate new keys
@@ -343,8 +345,9 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr              = keeping.Manager(ks=kpr, salt=salt)
     # set a non transferable derivation code
     verfers, _, _, _ = mgr.incept(icount=1, ncount=0, transferable=False)
+    keys             = [verfers[0].qb64]
     # code marks ID as self-addressing
-    srdr             = eventing.incept(keys=[verfers[0].qb64], code=coring.MtrDex.Blake3_256)
+    srdr             = eventing.incept(keys=keys, code=coring.MtrDex.Blake3_256)
     ppjson(srdr)
     # ----------Abandoned Self-Addressing ID(Non Transferable)----------
     # Has a transferable derivation code, but contains an empty pre-rotation key.
@@ -355,8 +358,9 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     salt             = coring.Salter().qb64
     mgr              = keeping.Manager(ks=kpr, salt=salt)
     verfers, _, _, _ = mgr.incept(icount=1, ncount=0, transferable=True)
+    keys             = [verfers[0].qb64]
     # empty nxt i.e. abandoned
-    srdr             = eventing.incept(keys=[verfers[0].qb64], code=coring.MtrDex.Blake3_256)
+    srdr             = eventing.incept(keys=keys, code=coring.MtrDex.Blake3_256)
     ppjson(srdr)
 
 #+end_src
@@ -369,8 +373,9 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
     keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     # code marks ID as self-addressing
-    srdr                  = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Blake3_256)
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Blake3_256)
     ppjson(srdr)
 
 #+end_src
@@ -399,8 +404,9 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     # create rotation event
     ID                    = srdr.pre
     keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     icpDigest             = srdr.saider.qb64
-    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=[digers[0].qb64], sn=1)
+    srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=nkeys, sn=1)
     ppjson(srdr)
 
 #+end_src
@@ -432,8 +438,9 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=3, ncount=3, transferable=True)
     keys                  = [verfer.qb64 for verfer in verfers]
+    nkeys                 = [diger.qb64 for diger in digers]
     # code marks ID as self-addressing
-    srdr                  = eventing.incept(keys=keys, nkeys=[diger.qb64 for diger in digers], code=coring.MtrDex.Blake3_256)
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Blake3_256)
     ppjson(srdr)
 
 #+end_src
@@ -452,7 +459,7 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=3, ncount=3, transferable=True)
     keys                  = [verfer.qb64 for verfer in verfers]
-    nkeys                 =[diger.qb64 for diger in digers]
+    nkeys                 = [diger.qb64 for diger in digers]
     # code marks ID as self-addressing
     srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Blake3_256)
     ppjson(srdr)
@@ -462,7 +469,7 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     # create rotation event
     ID                    = srdr.pre
     keys                  = [verfer.qb64 for verfer in verfers]
-    nkeys                 =[digers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     icpDigest             = srdr.saider.qb64
     srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=nkeys, sn=1)
     ppjson(srdr)
@@ -665,17 +672,18 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
 import keri.core.parsing as parsing
 with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     # -----------------------Basic Transferable ID----------------------
-    salt = coring.Salter().qb64
-    mgr = keeping.Manager(ks=kpr, salt=salt)
+    salt                  = coring.Salter().qb64
+    mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=1, ncount=1)
-    keys = [verfers[0].qb64]
-    srdr = eventing.incept(keys=keys, nkeys=[digers[0].qb64], code=coring.MtrDex.Ed25519)
-    sigers = mgr.sign(ser=srdr.raw, verfers=verfers)
+    keys                  = [verfers[0].qb64]
+    nkeys                 = [digers[0].qb64]
+    srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
+    sigers                = mgr.sign(ser=srdr.raw, verfers=verfers)
     # Create the message
-    msg = eventing.messagize(srdr, sigers=sigers)
+    msg                   = eventing.messagize(srdr, sigers=sigers)
     # --------------------------------Validation--------------------------------
-    kevery = eventing.Kevery(db=db)
-    valid = True
+    kevery                = eventing.Kevery(db=db)
+    # this will throw an exception if not valid
     print(parsing.Parser().parseOne(ims=msg, kvy=kevery))
 
 #+end_src
@@ -689,7 +697,7 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
     keys                  = [verfers[0].qb64]
-    nkeys                 =[digers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     # code marks this ID as basic
     srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
     ppjson(srdr)
@@ -699,7 +707,7 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     # create rotation event
     ID                    = srdr.pre
     keys                  = [verfers[0].qb64]
-    nkeys                 =[digers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     icpDigest             = srdr.saider.qb64
     # Create rotation event
     srdr                  = eventing.rotate(pre=ID, keys=keys, dig=icpDigest, nkeys=nkeys, sn=1)
@@ -725,7 +733,7 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
     mgr                   = keeping.Manager(ks=kpr, salt=salt)
     verfers, digers, _, _ = mgr.incept(icount=1, ncount=1, transferable=True)
     keys                  = [verfers[0].qb64]
-    nkeys                 =[digers[0].qb64]
+    nkeys                 = [digers[0].qb64]
     # code marks this ID as basic
     srdr                  = eventing.incept(keys=keys, nkeys=nkeys, code=coring.MtrDex.Ed25519)
     ppjson(srdr)
