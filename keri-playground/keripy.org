@@ -64,7 +64,7 @@ in
 pkgs.mkShell {
   buildInputs = [
     python-with-my-packages
-    # other dependencies
+    pkgs.libsodium
   ];
   shellHook = ''
     PYTHONPATH=${python-with-my-packages}/${python-with-my-packages.sitePackages}
@@ -186,7 +186,8 @@ rm -rf /usr/local/var/keri/
 #+end_src
 
 ------------------------------------------------------------------------------
-* ./keripy/scripts/demo/basic/alice-bob-agent.sh
+<<demo-alice-bob-agent.sh>>
+* demo alice-bob-agent.sh
 
 in a [[keripy-development-shell][keripy development shell]]
 
@@ -209,7 +210,7 @@ in another [[keripy-development-shell][keripy development shell]]
 #+begin_src
  (eepitch-shell3)
 source ./scripts/demo/demo-scripts.sh
-./scripts/demo/basic/alice-bob-agent.sh
+./keripy/scripts/demo/basic/alice-bob-agent.sh
 
 rm -rf /usr/local/var/keri/
 #+end_src
@@ -217,7 +218,11 @@ rm -rf /usr/local/var/keri/
 ------------------------------------------------------------------------------
 * agent endpoint
 
+first start up the 3 shells for [[demo-alice-bob-agent.sh][demo alice-bob-agent.sh]],
+but do not the script in the 3rd shell
+
 #+begin_src
+ (eepitch-shell3)
 curl -s -X GET "http://localhost:5623/spec.yaml"
 curl -s -X GET "http://localhost:5623/ids"
 curl -s -X GET "http://localhost:5623/ids/Alice"
