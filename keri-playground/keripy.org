@@ -108,7 +108,8 @@ pytest tests/demo/
 #+begin_src
 python
 import sys
-sys.path
+# grab the result of this
+"export PYTHONPATH=." + ':'.join(sys.path) + ":${PYTHONPATH}"
 
 #+end_src
 
@@ -218,21 +219,25 @@ rm -rf /usr/local/var/keri/
 ------------------------------------------------------------------------------
 * agent endpoint
 
-first start up the 3 shells for [[demo-alice-bob-agent.sh][demo alice-bob-agent.sh]],
-but do not the script in the 3rd shell
+run [[demo-alice-bob-agent.sh][demo alice-bob-agent.sh]] then do:
 
 #+begin_src
  (eepitch-shell3)
 curl -s -X GET "http://localhost:5623/spec.yaml"
 curl -s -X GET "http://localhost:5623/ids"
+curl -s -X GET "http://localhost:5723/ids"
 curl -s -X GET "http://localhost:5623/ids/Alice"
 curl -s -X GET "http://localhost:5623/registries"
 curl -s -X GET "http://localhost:5623/challenge"
+curl -s -X GET "http://localhost:5623/challenge/XXX"
 curl -s -X GET "http://localhost:5623/contacts"
 curl -s -X GET "http://localhost:5623/notifications"
 curl -s -X GET "http://localhost:5623/schema"
 curl -s -X GET "http://localhost:5623/escrows"
 curl -s -X GET "http://localhost:5623/mbx"
+curl -s -X GET "http://localhost:5623/keystate/XXX"
+curl -s -X GET "http://localhost:5623/credentials/XXX"
+curl -s -X GET "http://localhost:5623/oobi/XXX"
 #+end_src
 
 ------------------------------------------------------------------------------
