@@ -86,7 +86,7 @@ python -m venv keripy
 source keripy/bin/activate
 pip install -r requirements.txt
 # PYTHONPATH is specific to your installation, see instructions below
-export PYTHONPATH=".":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python310.zip":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10/lib-dynload":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/keripy/lib/python3.10/site-packages":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/src":${PYTHONPATH}
+export PYTHONPATH=".":"/nix/store/pygh0va65fdbv01mbjvdlv70q0wnzb4p-python3-3.10.4/lib/python310.zip":"/nix/store/pygh0va65fdbv01mbjvdlv70q0wnzb4p-python3-3.10.4/lib/python3.10":"/nix/store/pygh0va65fdbv01mbjvdlv70q0wnzb4p-python3-3.10.4/lib/python3.10/lib-dynload":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/keripy/lib/python3.10/site-packages":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/src":${PYTHONPATH}
 #+end_src
 
 =PYTHONPATH= above is found by following instructions at [[keripy-PYTHONPATH][keripy PYTHONPATH]]
@@ -211,7 +211,11 @@ in another [[keripy-development-shell][keripy development shell]]
 #+begin_src
  (eepitch-shell3)
 source ./scripts/demo/demo-scripts.sh
-./keripy/scripts/demo/basic/alice-bob-agent.sh
+# look inside and run one command at a time:
+# ./keripy/scripts/demo/basic/alice-bob-agent.sh
+
+# or just run the entire script:
+./scripts/demo/basic/alice-bob-agent.sh
 
 rm -rf /usr/local/var/keri/
 #+end_src
