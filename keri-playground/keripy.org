@@ -67,8 +67,10 @@ pkgs.mkShell {
     pkgs.libsodium
   ];
   shellHook = ''
-    PYTHONPATH=${python-with-my-packages}/${python-with-my-packages.sitePackages}
-    # maybe set more env-vars
+    python -m venv keripy
+    source  keripy/bin/activate
+    pip     install -r requirements.txt
+    export  PYTHONPATH=.:$(pwd)/keripy/lib/python3.10/site-packages:$(pwd)/src:${python-with-my-packages}/${python-with-my-packages.sitePackages}
   '';
 }
 EOF
@@ -81,36 +83,16 @@ EOF
 #+begin_src
  (eepitch-shell)
 cd keripy
-nix-shell shell.nix
-python -m venv keripy
-source keripy/bin/activate
-pip install -r requirements.txt
-# PYTHONPATH is specific to your installation, see instructions below
-export PYTHONPATH=".":"/nix/store/pygh0va65fdbv01mbjvdlv70q0wnzb4p-python3-3.10.4/lib/python310.zip":"/nix/store/pygh0va65fdbv01mbjvdlv70q0wnzb4p-python3-3.10.4/lib/python3.10":"/nix/store/pygh0va65fdbv01mbjvdlv70q0wnzb4p-python3-3.10.4/lib/python3.10/lib-dynload":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/keripy/lib/python3.10/site-packages":"/Users/hcarr/ws/OLABS/0-next/KERI/keripy/src":${PYTHONPATH}
+nix-shell
 #+end_src
-
-=PYTHONPATH= above is found by following instructions at [[keripy-PYTHONPATH][keripy PYTHONPATH]]
 
 ** test keripy
 
-in a development shell
+in a keripy development shell
 
 #+begin_src
 pytest tests/ --ignore tests/demo/
 pytest tests/demo/
-#+end_src
-
-<<keripy-PYTHONPATH>>
-** keripy PYTHONPATH
-
-=PYTHONPATH= above was set by looking at =sys.path= in a keripy development shell:
-
-#+begin_src
-python
-import sys
-# grab the result of this
-"export PYTHONPATH=." + ':'.join(sys.path) + ":${PYTHONPATH}"
-
 #+end_src
 
 ------------------------------------------------------------------------------
