@@ -249,7 +249,7 @@ curl -s -X GET "http://localhost:5623/oobi/XXX"
 
 [[./keripy/ref/getting_started.md]]
 
-in a nix shell with python virtualenv setup
+in a [[keripy-development-shell][keripy development shell]]
 
 #+begin_src
 python
@@ -318,7 +318,7 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
 
 - Cannot rotate non-tranferable IDs.
 - Cannot change transferable ID to non transferable ID after inception.
-  - Can rotate to a null key(s) effectively abandoning the ID.
+  - Can rotate to a empty key(s) effectively abandoning the ID.
 
 ***** Rotation of Basic Transferable ID
 
@@ -521,70 +521,11 @@ See https://github.com/WebOfTrust/keri/blob/master/kids/kid0003.md#element-label
 for explanations of different keys meanings.
 
 types of event messages:
-
 - inception
-#+begin_example
-    {
-      "v":"KERI10JSON0000e6_",
-      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
-      "s":"0",
-      "t":"icp",
-      "kt":"1",
-      "k":[
-        "Dpt7mGZ3y5UmhT1NLExb1IW8vMJ8ylQW3K44LfkTgAqE"
-      ],
-      "n":"Erpltchg7BUv21Qz3ZXhOhVu63m7S7YbPb21lSeGYd90",
-      "wt":"0",
-      "w":[],
-      "c":[]
-    }
-#+end_example
-
 - rotation
-
-#+begin_example
-    {
-      "v":"KERI10JSON000122_",
-      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
-      "s":"1",
-      "t":"rot",
-      "p":"Ey2pXEnaoQVwxA4jB6k0QH5G2Us-0juFL5hOAHAwIEkc",
-      "kt":"1",
-      "k":[
-        "D-HwiqmaETxls3vAVSh0xpXYTs94NUJX6juupWj_EgsA"
-      ],
-      "n":"ED6lKZwg-BWl_jlCrjosQkOEhqKD4BJnlqYqWmhqPhaU",
-      "wt":"0",
-      "wr":[],
-      "wa":[],
-      "a":[]
-    }
-#+end_example
-
 - delegated inception
-
-#+begin_example
-...
-#+end_example
-
 - delegated rotation
-
-#+begin_example
-...
-#+end_example
-
 - interaction
-
-#+begin_example
-    {
-      "v":"KERI10JSON000098_",
-      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
-      "s":"2",
-      "t":"ixn",
-      "p":"EO7V6wDClWWiN_7sfGDTD8KsfRQaHyap6fz_O4CYvsek",
-      "a":[]
-    }
-#+end_example
 
 *** Receipts
 
@@ -594,32 +535,10 @@ receipt signed by validator/witness
 
 used to detect duplicity if witness/validator tries to claim it never saw the event.
 
--  Witness Receipts
-#+begin_example
-...
-#+end_example
-
+- Witness Receipts
 - Validator Receipts
-#+begin_example
-    {
-      "v":"KERI10JSON000105_",
-      "i":"EsU9ZQwug7DS-GU040Ugj1t7p6Au14VkBOCJnPYabcas",
-      "s":"2",
-      "t":"vrc",
-      "d":"EuCLxtdKdRgzzgBnPhTwFKz36u58DqQyMqhX5CUrurPE",
-      "a":{
-        "i":"EBiIFxr_o1b4x1YR21PblAFpFG61qDghqFBDyVSOXYW0",
-        "s":"0",
-        "d":"ElsHFkbZQjRb7xHnuE-wyiarIZ9j-1CEQ89I0E3WevcE"
-      }
-    }
-#+end_example
 
 ** Modes
-
-Direct Replay Mode(Direct Mode)
-
-Indirect Replay Mode(Indirect Mode).
 
 *** Direct Mode
 
@@ -659,11 +578,11 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
 
 for event to be valid it must be signed
 
-Manager can sign an event to create signatures.
+manager can sign an event to create signatures
 
-Sigs not yet attached to event.
+sigs not yet attached to event
 
-See below for how to attach.
+see below for how to attach
 
 #+begin_src
 with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
@@ -734,12 +653,12 @@ with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
 
 **** Abandonment
 
-Abandonment/revocation is subset of rotation.
+abandonment/revocation is subset of rotation
 
-events always include a pre rotated key.
+events always include a pre rotated key
 
-To abandon an ID a rotation event is created
-where the pre rotated key is set to an empty string or null.
+to abandon an ID a rotation event is created
+where the pre rotated key is set to an empty
 
 #+begin_src
 with dbing.openLMDB(name="edy") as db, keeping.openKS(name="edy") as kpr:
