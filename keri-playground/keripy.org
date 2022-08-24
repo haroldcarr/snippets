@@ -119,18 +119,12 @@ cp ../keripy/shell.nix .
 <<vLEI-development-shell>>
 ** vLEI development shell
 
+Note: because =shell.nix= was copied from =keripy= the virtual environment directory
+for vLEI will be named =keripy=.
+
 #+begin_src
 cd vLEI
-nix-shell shell.nix
-python -m venv vLEI
-source vLEI/bin/activate
-pip install -r requirements.txt
-#+end_src
-
-find the setting for this as was done for [[keripy-PYTHONPATH][keripy-PYTHONPATH]]
-
-#+begin_src
-export PYTHONPATH=".":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python310.zip":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10":"/nix/store/q39clx0r9fy4aki89kx8ylxlnvaylvhj-python3-3.10.5/lib/python3.10/lib-dynload":"/Users/hcarr/ws/OLABS/0-next/KERI/vLEI/vLEI/lib/python3.10/site-packages":"/Users/hcarr/ws/OLABS/0-next/KERI/vLEI/src":${PYTHONPATH}
+nix-shell
 #+end_src
 
 ** test vLEI
@@ -142,29 +136,32 @@ pytest tests
 ------------------------------------------------------------------------------
 * ./keripy/scripts/demo/vLEI/issue-xbrl-attestation.sh
 
-in a [[keripy-development-shell][keripy development shell]]
-
 #+begin_src
  (eepitch-shell)
+# clear the cache
 rm -rf /usr/local/var/keri/
 
+# start witnesses
+cd keripy
+nix-shell
 kli witness demo
-#+end_src
 
-in a [[vLEI-development-shell][vLEI development shell]]
-
-#+begin_src
+# start vLEI
  (eepitch-shell2)
+cd vLEI
+nix-shell
 vLEI-server -s ./schema/acdc -c ./samples/acdc/ -o ./samples/oobis/
-#+end_src
 
-in another [[keripy-development-shell][keripy development shell]]
-
-#+begin_src
+# run script
  (eepitch-shell3)
+cd keripy
+nix-shell
 source ./scripts/demo/demo-scripts.sh
 ./scripts/demo/vLEI/issue-xbrl-attestation.sh
 
+# exit/kill shells
+
+# clear the cache
 rm -rf /usr/local/var/keri/
 #+end_src
 
@@ -172,26 +169,26 @@ rm -rf /usr/local/var/keri/
 <<demo-alice-bob-agent.sh>>
 * demo alice-bob-agent.sh
 
-in a [[keripy-development-shell][keripy development shell]]
-
 #+begin_src
  (eepitch-shell)
+# clear the cache
 rm -rf /usr/local/var/keri/
 
+# start agents
+cd keripy
+nix-shell
 kli agent demo --config-file demo-witness-oobis
-#+end_src
 
-in another [[keripy-development-shell][keripy development shell]]
-
-#+begin_src
  (eepitch-shell2)
+# start witnesses
+cd keripy
+nix-shell
 kli witness demo
-#+end_src
 
-in another [[keripy-development-shell][keripy development shell]]
-
-#+begin_src
  (eepitch-shell3)
+# run demo
+cd keripy
+nix-shell
 source ./scripts/demo/demo-scripts.sh
 # look inside and run one command at a time:
 # ./keripy/scripts/demo/basic/alice-bob-agent.sh
@@ -199,6 +196,9 @@ source ./scripts/demo/demo-scripts.sh
 # or just run the entire script:
 ./scripts/demo/basic/alice-bob-agent.sh
 
+# exit/kill shells
+
+# clear the cache
 rm -rf /usr/local/var/keri/
 #+end_src
 
@@ -234,6 +234,9 @@ curl -s -X GET "http://localhost:5623/oobi/XXX"
 in a [[keripy-development-shell][keripy development shell]]
 
 #+begin_src
+ (eepitch-shell)
+cd keripy
+nix-shell
 python
 
 import json
