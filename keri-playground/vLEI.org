@@ -1,0 +1,99 @@
+
+- =M-x list-packages=
+- find =eev= and install
+- =M-x eev-beginner=
+- leave the "eev-beginner" file that pops up (but do not kill it)
+- go back to this file
+
+Now function key F8 will send things from this file to a shell.
+
+#+begin_src
+# start shell
+ (eepitch-shell)
+# kill shell (to be fresh, in case it was already running)
+ (eepitch-kill)
+# start shell
+ (eepitch-shell)
+#+end_src
+
+------------------------------------------------------------------------------
+* install vLEI and nix support
+
+#+begin_src
+ (eepitch-shell2)
+#+end_src
+
+** clone vLEI
+
+#+begin_src
+git clone git@github.com:WebOfTrust/vLEI.git
+cd vLEI
+git fetch --prune
+git pull --rebase
+#+end_src
+
+** nix stuff
+
+This assumes
+- the instructions for setting up an keripy development environment have been on
+  - see [[./keripy.org][./keripy.org]]
+- that the keripy and vLEI repos are rooted in the same parent directory
+
+#+begin_src
+cp -rp ../keripy/nix .
+cp ../keripy/shell.nix .
+#+end_src
+
+------------------------------------------------------------------------------
+* vLEI development shell
+
+<<vLEI-development-shell>>
+** vLEI development shell
+
+Note: because =shell.nix= was copied from =keripy= the virtual environment directory
+for vLEI will be named =keripy=.
+
+#+begin_src
+cd vLEI
+nix-shell
+#+end_src
+
+** test vLEI
+
+#+begin_src
+pytest tests
+#+end_src
+
+------------------------------------------------------------------------------
+* ./keripy/scripts/demo/vLEI/issue-xbrl-attestation.sh
+
+#+begin_src
+ (eepitch-shell)
+# clear the cache
+rm -rf /usr/local/var/keri/
+
+# start witnesses
+cd vLEI
+nix-shell
+kli witness demo
+
+# start vLEI
+ (eepitch-shell2)
+cd vLEI
+nix-shell
+vLEI-server -s ./schema/acdc -c ./samples/acdc/ -o ./samples/oobis/
+
+# run script
+ (eepitch-shell3)
+cd vLEI
+nix-shell
+cd ../keripy
+source ./scripts/demo/demo-scripts.sh
+./scripts/demo/vLEI/issue-xbrl-attestation.sh
+
+# clear the cache
+rm -rf /usr/local/var/keri/
+
+# exit/kill shells
+#+end_src
+

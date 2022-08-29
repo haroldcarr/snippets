@@ -19,11 +19,13 @@ Now function key F8 will send things from this file to a shell.
 ------------------------------------------------------------------------------
 * install keripy and nix support
 
-** clone keripy
+** clone or update keripy
 
 #+begin_src
 git clone https://github.com/WebOfTrust/keripy
 pushd keripy
+git fetch --prune
+git pull --rebase
 #+end_src
 
 ** pin nixpkgs via =niv=
@@ -96,76 +98,6 @@ pytest tests/demo/
 #+end_src
 
 ------------------------------------------------------------------------------
-* Build and test vLEI
-
-#+begin_src
- (eepitch-shell2)
-#+end_src
-
-** clone vLEI
-
-#+begin_src
-git clone git@github.com:WebOfTrust/vLEI.git
-cd vLEI
-#+end_src
-
-** nix stuff
-
-#+begin_src
-cp -rp ../keripy/nix .
-cp ../keripy/shell.nix .
-#+end_src
-
-<<vLEI-development-shell>>
-** vLEI development shell
-
-Note: because =shell.nix= was copied from =keripy= the virtual environment directory
-for vLEI will be named =keripy=.
-
-#+begin_src
-cd vLEI
-nix-shell
-#+end_src
-
-** test vLEI
-
-#+begin_src
-pytest tests
-#+end_src
-
-------------------------------------------------------------------------------
-* ./keripy/scripts/demo/vLEI/issue-xbrl-attestation.sh
-
-#+begin_src
- (eepitch-shell)
-# clear the cache
-rm -rf /usr/local/var/keri/
-
-# start witnesses
-cd keripy
-nix-shell
-kli witness demo
-
-# start vLEI
- (eepitch-shell2)
-cd vLEI
-nix-shell
-vLEI-server -s ./schema/acdc -c ./samples/acdc/ -o ./samples/oobis/
-
-# run script
- (eepitch-shell3)
-cd keripy
-nix-shell
-source ./scripts/demo/demo-scripts.sh
-./scripts/demo/vLEI/issue-xbrl-attestation.sh
-
-# exit/kill shells
-
-# clear the cache
-rm -rf /usr/local/var/keri/
-#+end_src
-
-------------------------------------------------------------------------------
 <<demo-alice-bob-agent.sh>>
 * demo alice-bob-agent.sh
 
@@ -196,10 +128,10 @@ source ./scripts/demo/demo-scripts.sh
 # or just run the entire script:
 ./scripts/demo/basic/alice-bob-agent.sh
 
-# exit/kill shells
-
 # clear the cache
 rm -rf /usr/local/var/keri/
+
+# exit/kill shells
 #+end_src
 
 ------------------------------------------------------------------------------
@@ -209,21 +141,60 @@ run [[demo-alice-bob-agent.sh][demo alice-bob-agent.sh]] then do:
 
 #+begin_src
  (eepitch-shell3)
+netstat -nab | grep LISTEN
+
+# controllers http
+5623
+5723
+5823
+5923
+
+# witness tcp/http pairs
+5632
+5642
+
+5633
+5643
+
+5634
+5644
+
+# CONTROLLER
 curl -s -X GET "http://localhost:5623/spec.yaml"
-curl -s -X GET "http://localhost:5623/ids"
-curl -s -X GET "http://localhost:5723/ids"
-curl -s -X GET "http://localhost:5623/ids/Alice"
-curl -s -X GET "http://localhost:5623/registries"
-curl -s -X GET "http://localhost:5623/challenge"
-curl -s -X GET "http://localhost:5623/challenge/XXX"
-curl -s -X GET "http://localhost:5623/contacts"
-curl -s -X GET "http://localhost:5623/notifications"
-curl -s -X GET "http://localhost:5623/schema"
-curl -s -X GET "http://localhost:5623/escrows"
-curl -s -X GET "http://localhost:5623/mbx"
-curl -s -X GET "http://localhost:5623/keystate/XXX"
-curl -s -X GET "http://localhost:5623/credentials/XXX"
-curl -s -X GET "http://localhost:5623/oobi/XXX"
+
+curl -s -X GET "http://localhost:5623/ids" | jq
+curl -s -X GET "http://localhost:5723/ids" | jq
+
+curl -s -X GET "http://localhost:5623/ids/Alice" | jq
+
+curl -s -X GET "http://localhost:5623/registries" | jq
+
+curl -s -X GET "http://localhost:5623/challenge" | jq
+
+curl -s -X GET "http://localhost:5623/contacts" | jq
+
+curl -s -X GET "http://localhost:5623/notifications" | jq
+
+curl -s -X GET "http://localhost:5623/schema" | jq
+
+curl -s -X GET "http://localhost:5623/escrows" | jq
+
+curl -s -X GET "http://localhost:5623/mbx" | jq
+
+curl -s -X GET "http://localhost:5623/keystate/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk" | jq
+
+curl -s -X GET "http://localhost:5623/credentials/Alice/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk"
+
+curl -s -X GET "http://localhost:5623/oobi/EHvJernk0fXfDpWRt93NeuTzZUOrvfnPaH7__63PJdqw?whatgoeshere"
+curl -s -X GET "http://localhost:5623/oobi/Bob?whatgoeshere"
+
+# OOBI
+curl -s -X GET "http://localhost:5642"
+curl -s -X GET "http://localhost:5642/spec.yaml"
+curl -s -X GET "http://localhost:5644/spec.yaml"
+
+curl -s -X GET "http://127.0.0.1:5644/oobi/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk/witness/Bgoq68HCmYNUDgOz4Skvlu306o_NY-NrYuKAVhk3Zh9c"
+curl -s -X GET "http://127.0.0.1:5644/oobi/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk/witness/Bgoq68HCmYNUDgOz4Skvlu306o_NY-NrYuKAVhk3Zh9c" | jq
 #+end_src
 
 ------------------------------------------------------------------------------
