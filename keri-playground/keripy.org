@@ -135,6 +135,21 @@ rm -rf /usr/local/var/keri/
 #+end_src
 
 ------------------------------------------------------------------------------
+* ./keripy/src/keri/demo/demo.md
+
+#+begin_src
+ (eepitch-shell)
+cd keripy
+nix-shell
+python3 -m keri.demo.demo_bob
+
+ (eepitch-shell2)
+cd keripy
+nix-shell
+python3 -m keri.demo.demo_eve
+#+end_src
+
+------------------------------------------------------------------------------
 * agent endpoint
 
 run [[demo-alice-bob-agent.sh][demo alice-bob-agent.sh]] then do:
@@ -185,8 +200,9 @@ curl -s -X GET "http://localhost:5623/keystate/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMx
 
 curl -s -X GET "http://localhost:5623/credentials/Alice/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk"
 
-curl -s -X GET "http://localhost:5623/oobi/EHvJernk0fXfDpWRt93NeuTzZUOrvfnPaH7__63PJdqw?whatgoeshere"
-curl -s -X GET "http://localhost:5623/oobi/Bob?whatgoeshere"
+curl -s -X GET "http://localhost:5623/oobi/EHvJernk0fXfDpWRt93NeuTzZUOrvfnPaH7__63PJdqw?role=controller"
+curl -s -X GET "http://localhost:5623/oobi/Alice?role=controller"
+curl -s -X GET "http://localhost:5623/oobi/Bob?role=witness"
 
 # OOBI
 curl -s -X GET "http://localhost:5642"
@@ -194,7 +210,8 @@ curl -s -X GET "http://localhost:5642/spec.yaml"
 curl -s -X GET "http://localhost:5644/spec.yaml"
 
 curl -s -X GET "http://127.0.0.1:5644/oobi/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk/witness/Bgoq68HCmYNUDgOz4Skvlu306o_NY-NrYuKAVhk3Zh9c"
-curl -s -X GET "http://127.0.0.1:5644/oobi/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk/witness/Bgoq68HCmYNUDgOz4Skvlu306o_NY-NrYuKAVhk3Zh9c" | jq
+curl -s -X GET "http://127.0.0.1:5644/oobi/ERFmtKcQCd8xW7Rzl-PqyJ1QAfJYlfdMxYRVncPBMDkk/witness/Bgoq68HCmYNUDgOz4Skvlu306o_NY-NrYuKAVhk3Zh9c?role=controller"
+curl -s -X GET "http://127.0.0.1:5643/oobi/EHvJernk0fXfDpWRt93NeuTzZUOrvfnPaH7__63PJdqw/witness/BuyRFMideczFZoapylLIyCjSdhtqVb31wZkRKvPfNqkw"
 #+end_src
 
 ------------------------------------------------------------------------------
